@@ -121,9 +121,10 @@ int main(int argc, char *argv[])
             timeg += time1;
         }
 
+        time1 = timeg;
         timeg /= loops;
-        fprintf(stderr, " %10.2f MFlops %12.9f sec\n",
-                COMPSIZE * COMPSIZE * 1. * (double)n * (double)n / timeg / 1.e6, timeg);
+        fprintf(stderr, " %10.2f MFlops %12.6f SEC\n",
+                COMPSIZE * COMPSIZE * 1. * (double)n * (double)n / timeg / 1.e6, time1);
     }
 
     return 0;

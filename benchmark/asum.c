@@ -120,12 +120,13 @@ int main(int argc, char *argv[])
       timeg += getsec();
     }
     if (loops > 1)
+      time1 = timeg;
       timeg /= loops;
 
 #ifdef COMPLEX
-    fprintf(stderr, " %10.2f MFlops %10.6f sec\n", 4. * (double)m / timeg * 1.e-6, timeg);
+    fprintf(stderr, " %10.2f MFlops %10.6f SEC\n", 4. * (double)m / timeg * 1.e-6, time1);
 #else
-    fprintf(stderr, " %10.2f MFlops %10.6f sec\n", 2. * (double)m / timeg * 1.e-6, timeg);
+    fprintf(stderr, " %10.2f MFlops %10.6f SEC\n", 2. * (double)m / timeg * 1.e-6, time1);
 #endif
   }
 

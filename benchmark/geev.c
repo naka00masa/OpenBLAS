@@ -177,7 +177,7 @@ int main(int argc, char *argv[]){
     time1 = getsec();
 
     fprintf(stderr,
-	    " %10.2f MFlops : %10.2f Sec : %d\n",
+	    " %10.2f MFlops %10.6f SEC : %d\n",
 	    COMPSIZE * COMPSIZE * factor * (double)m * (double)m * (double)m / time1 * 1.e-6,time1,lwork);
 
 

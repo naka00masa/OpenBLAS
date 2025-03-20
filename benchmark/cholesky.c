@@ -225,11 +225,11 @@ int main(int argc, char *argv[]){
 
       fprintf(stderr,
 #ifdef XDOUBLE
-	      "  %Le  %10.3f MFlops", maxerr,
+	      "  %Le  %10.3f MFlops %10.6f SEC", maxerr,
 #else
-	      "  %e  %10.3f MFlops", maxerr,
+	      "  %e  %10.3f MFlops %10.6f SEC", maxerr,
 #endif
-	      getmflops(COMPSIZE * COMPSIZE, m, time1));
+	      getmflops(COMPSIZE * COMPSIZE, m, time1), time1);
 
       if (maxerr > 1.e-3) {
 	fprintf(stderr, "Hmm, probably it has bug.\n");

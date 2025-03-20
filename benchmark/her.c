@@ -100,8 +100,8 @@ int main(int argc, char *argv[]){
         time1 = getsec();
 
         fprintf(stderr,
-                " %10.2f MFlops\n",
-                COMPSIZE * COMPSIZE * 1. * (double)m * (double)m / time1 * 1.e-6);
+                " %10.2f MFlops %10.6f SEC\n",
+                COMPSIZE * COMPSIZE * 1. * (double)m * (double)m / time1 * 1.e-6, time1);
 
     }
 

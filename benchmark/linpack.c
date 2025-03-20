@@ -182,10 +182,10 @@ int main(int argc, char *argv[]){
 #endif
 
     fprintf(stderr,
-	    " %10.2f MFlops %10.2f MFlops %10.2f MFlops\n",
-	    COMPSIZE * COMPSIZE * 2. / 3. * (double)m * (double)m * (double)m / time1 * 1.e-6,
-	    COMPSIZE * COMPSIZE * 2.      * (double)m * (double)m             / time2 * 1.e-6,
-	    COMPSIZE * COMPSIZE * (2. / 3. * (double)m * (double)m * (double)m + 2. * (double)m * (double)m) / (time1 + time2) * 1.e-6);
+	    " %10.2f MFlops %10.6f SEC %10.2f MFlops %10.6f SEC %10.2f MFlops %10.6f SEC\n",
+	    COMPSIZE * COMPSIZE * 2. / 3. * (double)m * (double)m * (double)m / time1 * 1.e-6, time1,
+	    COMPSIZE * COMPSIZE * 2.      * (double)m * (double)m             / time2 * 1.e-6, time2,
+	    COMPSIZE * COMPSIZE * (2. / 3. * (double)m * (double)m * (double)m + 2. * (double)m * (double)m) / (time1 + time2) * 1.e-6, (time1 + time2));
 
 #if 0
     if (

@@ -167,8 +167,8 @@ int main(int argc, char *argv[]){
     } // loops
     time1 = timeg/(double)loops;
     fprintf(stderr,
-	    " %10.2f MFlops : %10.2f Sec : %d\n",
-	    COMPSIZE * COMPSIZE * (4.0/3.0 * (double)m * (double)m *(double)m - (double)m *(double)m + 5.0/3.0* (double)m) / time1 * 1.e-6,time1,lwork);
+	    " %10.2f MFlops %10.6f SEC : %d\n",
+	    COMPSIZE * COMPSIZE * (4.0/3.0 * (double)m * (double)m *(double)m - (double)m *(double)m + 5.0/3.0* (double)m) / time1 * 1.e-6,timeg,lwork);
 
 
   }

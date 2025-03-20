@@ -246,7 +246,7 @@ int main(int argc, char *argv[]){
 		flops = COMPSIZE * COMPSIZE * (2.0 * (double)m * (double)m *(double)m ) / time1 * 1.e-6;
 	if ( btest == 'I')
 		flops = COMPSIZE * COMPSIZE * (2.0/3.0 * (double)m * (double)m *(double)m +1.0/2.0* (double)m *(double)m + 5.0/6.0* (double)m) / time1 * 1.e-6;
-      fprintf(stderr, "%8d : %10.2f MFlops : %10.3f Sec : Test=%c\n",m,flops ,time1,btest);
+      fprintf(stderr, "%8d : %10.2f MFlops %10.6f SEC : Test=%c\n",m,flops ,time1,btest);
 
 
   }

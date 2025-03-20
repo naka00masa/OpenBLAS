@@ -109,11 +109,12 @@ int main(int argc, char *argv[]){
        timeg += getsec();
    }
 
+      time1 = timeg;
       timeg /= loops;
 
       fprintf(stderr,
-	    " %10.2f MBytes %12.9f sec\n",
-	    COMPSIZE * sizeof(FLOAT) * 1. * (double)m / timeg / 1.e6, timeg);
+	    " %10.2f MBytes %10.6f SEC\n",
+	    COMPSIZE * sizeof(FLOAT) * 1. * (double)m / timeg / 1.e6, time1);
 
   }
 
