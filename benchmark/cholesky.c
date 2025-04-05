@@ -44,37 +44,36 @@ double fabs(double);
 
 #ifndef COMPLEX
 #ifdef XDOUBLE
-#define POTRF   BLASFUNC(qpotrf)
-#define SYRK    BLASFUNC(qsyrk)
+#define POTRF BLASFUNC(qpotrf)
+#define SYRK BLASFUNC(qsyrk)
 #elif defined(DOUBLE)
-#define POTRF   BLASFUNC(dpotrf)
-#define SYRK    BLASFUNC(dsyrk)
+#define POTRF BLASFUNC(dpotrf)
+#define SYRK BLASFUNC(dsyrk)
 #else
-#define POTRF   BLASFUNC(spotrf)
-#define SYRK    BLASFUNC(ssyrk)
+#define POTRF BLASFUNC(spotrf)
+#define SYRK BLASFUNC(ssyrk)
 #endif
 #else
 #ifdef XDOUBLE
-#define POTRF   BLASFUNC(xpotrf)
-#define SYRK    BLASFUNC(xherk)
+#define POTRF BLASFUNC(xpotrf)
+#define SYRK BLASFUNC(xherk)
 #elif defined(DOUBLE)
-#define POTRF   BLASFUNC(zpotrf)
-#define SYRK    BLASFUNC(zherk)
+#define POTRF BLASFUNC(zpotrf)
+#define SYRK BLASFUNC(zherk)
 #else
-#define POTRF   BLASFUNC(cpotrf)
-#define SYRK    BLASFUNC(cherk)
+#define POTRF BLASFUNC(cpotrf)
+#define SYRK BLASFUNC(cherk)
 #endif
 #endif
 
-static __inline double getmflops(int ratio, int m, double secs){
-
+static __inline double getmflops(int ratio, int m, double secs) {
   double mm = (double)m;
   double mulflops, addflops;
 
-  if (secs==0.) return 0.;
+  if (secs == 0.) return 0.;
 
-  mulflops = mm * (1./3. + mm * (1./2. + mm * 1./6.));
-  addflops = 1./6. * mm * (mm * mm - 1);
+  mulflops = mm * (1. / 3. + mm * (1. / 2. + mm * 1. / 6.));
+  addflops = 1. / 6. * mm * (mm * mm - 1);
 
   if (ratio == 1) {
     return (mulflops + addflops) / secs * 1.e-6;
@@ -83,162 +82,198 @@ static __inline double getmflops(int ratio, int m, double secs){
   }
 }
 
-
-int main(int argc, char *argv[]){
-
+int main(int argc, char *argv[]) {
 #ifndef COMPLEX
   char *trans[] = {"T", "N"};
 #else
   char *trans[] = {"C", "N"};
 #endif
-  char *uplo[]  = {"U", "L"};
+  char *uplo[] = {"U", "L"};
   FLOAT alpha[] = {1.0, 0.0};
-  FLOAT beta [] = {0.0, 0.0};
+  FLOAT beta[] = {0.0, 0.0};
 
   FLOAT *a, *b;
 
+  char *p;
+
+  int loops = 1;
+  int l;
+
+  if ((p = getenv("OPENBLAS_LOOPS"))) loops = atoi(p);
+
   blasint m, i, j, info, uplos;
 
-  int from =   1;
-  int to   = 200;
-  int step =   1;
+  int from = 1;
+  int to = 200;
+  int step = 1;
 
-  FLOAT maxerr;
+  FLOAT maxerr = 0.0;
 
-  double time1;
+  double timeg;
 
-  argc--;argv++;
+  argc--;
+  argv++;
 
-  if (argc > 0) { from     = atol(*argv);		argc--; argv++;}
-  if (argc > 0) { to       = MAX(atol(*argv), from);	argc--; argv++;}
-  if (argc > 0) { step     = atol(*argv);		argc--; argv++;}
+  if (argc > 0) {
+    from = atol(*argv);
+    argc--;
+    argv++;
+  }
+  if (argc > 0) {
+    to = MAX(atol(*argv), from);
+    argc--;
+    argv++;
+  }
+  if (argc > 0) {
+    step = atol(*argv);
+    argc--;
+    argv++;
+  }
 
   fprintf(stderr, "From : %3d  To : %3d Step = %3d\n", from, to, step);
 
-  if (( a    = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((a = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-  if (( b    = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((b = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-  for(m = from; m <= to; m += step){
-
+  for (m = from; m <= to; m += step) {
+    timeg = 0.0;
     fprintf(stderr, "M = %6d : ", (int)m);
-
-    for (uplos = 0; uplos < 2; uplos ++) {
-
+    for (l = 0; l < loops; l++) {
+      for (uplos = 0; uplos < 2; uplos++) {
 #ifndef COMPLEX
-      if (uplos & 1) {
-	for (j = 0; j < m; j++) {
-	  for(i = 0; i < j; i++)     a[(long)i + (long)j * (long)m] = 0.;
-	                             a[(long)j + (long)j * (long)m] = ((double) rand() / (double) RAND_MAX) + 8.;
-	  for(i = j + 1; i < m; i++) a[(long)i + (long)j * (long)m] = ((double) rand() / (double) RAND_MAX) - 0.5;
-	}
-      } else {
-	for (j = 0; j < m; j++) {
-	  for(i = 0; i < j; i++)     a[(long)i + (long)j * (long)m] = ((double) rand() / (double) RAND_MAX) - 0.5;
-	                             a[(long)j + (long)j * (long)m] = ((double) rand() / (double) RAND_MAX) + 8.;
-	  for(i = j + 1; i < m; i++) a[(long)i + (long)j * (long)m] = 0.;
-	}
-      }
+        if (uplos & 1) {
+          for (j = 0; j < m; j++) {
+            for (i = 0; i < j; i++) a[(long)i + (long)j * (long)m] = 0.;
+            a[(long)j + (long)j * (long)m] =
+                ((double)rand() / (double)RAND_MAX) + 8.;
+            for (i = j + 1; i < m; i++)
+              a[(long)i + (long)j * (long)m] =
+                  ((double)rand() / (double)RAND_MAX) - 0.5;
+          }
+        } else {
+          for (j = 0; j < m; j++) {
+            for (i = 0; i < j; i++)
+              a[(long)i + (long)j * (long)m] =
+                  ((double)rand() / (double)RAND_MAX) - 0.5;
+            a[(long)j + (long)j * (long)m] =
+                ((double)rand() / (double)RAND_MAX) + 8.;
+            for (i = j + 1; i < m; i++) a[(long)i + (long)j * (long)m] = 0.;
+          }
+        }
 #else
-      if (uplos & 1) {
-	for (j = 0; j < m; j++) {
-	  for(i = 0; i < j; i++) {
-	    a[((long)i + (long)j * (long)m) * 2 + 0] = 0.;
-	    a[((long)i + (long)j * (long)m) * 2 + 1] = 0.;
-	  }
+        if (uplos & 1) {
+          for (j = 0; j < m; j++) {
+            for (i = 0; i < j; i++) {
+              a[((long)i + (long)j * (long)m) * 2 + 0] = 0.;
+              a[((long)i + (long)j * (long)m) * 2 + 1] = 0.;
+            }
 
-	  a[((long)j + (long)j * (long)m) * 2 + 0] = ((double) rand() / (double) RAND_MAX) + 8.;
-	  a[((long)j + (long)j * (long)m) * 2 + 1] = 0.;
+            a[((long)j + (long)j * (long)m) * 2 + 0] =
+                ((double)rand() / (double)RAND_MAX) + 8.;
+            a[((long)j + (long)j * (long)m) * 2 + 1] = 0.;
 
-	  for(i = j + 1; i < m; i++) {
-	    a[((long)i + (long)j * (long)m) * 2 + 0] = ((double) rand() / (double) RAND_MAX) - 0.5;
-	    a[((long)i + (long)j * (long)m) * 2 + 1] = ((double) rand() / (double) RAND_MAX) - 0.5;
-	  }
-	}
-      } else {
-	for (j = 0; j < m; j++) {
-	  for(i = 0; i < j; i++) {
-	    a[((long)i + (long)j * (long)m) * 2 + 0] = ((double) rand() / (double) RAND_MAX) - 0.5;
-	    a[((long)i + (long)j * (long)m) * 2 + 1] = ((double) rand() / (double) RAND_MAX) - 0.5;
-	  }
+            for (i = j + 1; i < m; i++) {
+              a[((long)i + (long)j * (long)m) * 2 + 0] =
+                  ((double)rand() / (double)RAND_MAX) - 0.5;
+              a[((long)i + (long)j * (long)m) * 2 + 1] =
+                  ((double)rand() / (double)RAND_MAX) - 0.5;
+            }
+          }
+        } else {
+          for (j = 0; j < m; j++) {
+            for (i = 0; i < j; i++) {
+              a[((long)i + (long)j * (long)m) * 2 + 0] =
+                  ((double)rand() / (double)RAND_MAX) - 0.5;
+              a[((long)i + (long)j * (long)m) * 2 + 1] =
+                  ((double)rand() / (double)RAND_MAX) - 0.5;
+            }
 
-	  a[((long)j + (long)j * (long)m) * 2 + 0] = ((double) rand() / (double) RAND_MAX) + 8.;
-	  a[((long)j + (long)j * (long)m) * 2 + 1] = 0.;
+            a[((long)j + (long)j * (long)m) * 2 + 0] =
+                ((double)rand() / (double)RAND_MAX) + 8.;
+            a[((long)j + (long)j * (long)m) * 2 + 1] = 0.;
 
-	  for(i = j + 1; i < m; i++) {
-	    a[((long)i + (long)j * (long)m) * 2 + 0] = 0.;
-	    a[((long)i + (long)j * (long)m) * 2 + 1] = 0.;
-	  }
-	}
-      }
+            for (i = j + 1; i < m; i++) {
+              a[((long)i + (long)j * (long)m) * 2 + 0] = 0.;
+              a[((long)i + (long)j * (long)m) * 2 + 1] = 0.;
+            }
+          }
+        }
 #endif
 
-      SYRK(uplo[uplos], trans[uplos], &m, &m, alpha, a, &m, beta, b, &m);
+        SYRK(uplo[uplos], trans[uplos], &m, &m, alpha, a, &m, beta, b, &m);
 
-      begin();
+        begin();
+        POTRF(uplo[uplos], &m, b, &m, &info);
+        end();
+        timeg += getsec();
 
-      POTRF(uplo[uplos], &m, b, &m, &info);
+        if (info != 0) {
+          fprintf(stderr, "Info = %d\n", info);
+          exit(1);
+        }
 
-      end();
-
-      if (info != 0) {
-	fprintf(stderr, "Info = %d\n", info);
-	exit(1);
-      }
-
-     time1 = getsec();
-
-
-      if (!(uplos & 1)) {
-	for (j = 0; j < m; j++) {
-	  for(i = 0; i <= j; i++) {
+        if (!(uplos & 1)) {
+          for (j = 0; j < m; j++) {
+            for (i = 0; i <= j; i++) {
 #ifndef COMPLEX
-	    if (maxerr < fabs(a[(long)i + (long)j * (long)m] - b[(long)i + (long)j * (long)m]))
-	        maxerr = fabs(a[(long)i + (long)j * (long)m] - b[(long)i + (long)j * (long)m]);
+              if (maxerr < fabs(a[(long)i + (long)j * (long)m] -
+                                b[(long)i + (long)j * (long)m]))
+                maxerr = fabs(a[(long)i + (long)j * (long)m] -
+                              b[(long)i + (long)j * (long)m]);
 #else
-	    if (maxerr < fabs(a[((long)i + (long)j * (long)m) * 2 + 0] - b[((long)i + (long)j * (long)m) * 2 + 0]))
-	        maxerr = fabs(a[((long)i + (long)j * (long)m) * 2 + 0] - b[((long)i + (long)j * (long)m) * 2 + 0]);
-	    if (maxerr < fabs(a[((long)i + (long)j * (long)m) * 2 + 1] - b[((long)i + (long)j * (long)m) * 2 + 1]))
-	        maxerr = fabs(a[((long)i + (long)j * (long)m) * 2 + 1] - b[((long)i + (long)j * (long)m) * 2 + 1]);
+              if (maxerr < fabs(a[((long)i + (long)j * (long)m) * 2 + 0] -
+                                b[((long)i + (long)j * (long)m) * 2 + 0]))
+                maxerr = fabs(a[((long)i + (long)j * (long)m) * 2 + 0] -
+                              b[((long)i + (long)j * (long)m) * 2 + 0]);
+              if (maxerr < fabs(a[((long)i + (long)j * (long)m) * 2 + 1] -
+                                b[((long)i + (long)j * (long)m) * 2 + 1]))
+                maxerr = fabs(a[((long)i + (long)j * (long)m) * 2 + 1] -
+                              b[((long)i + (long)j * (long)m) * 2 + 1]);
 #endif
-	  }
-	}
-      } else {
-	for (j = 0; j < m; j++) {
-	  for(i = j; i < m; i++) {
+            }
+          }
+        } else {
+          for (j = 0; j < m; j++) {
+            for (i = j; i < m; i++) {
 #ifndef COMPLEX
-	    if (maxerr < fabs(a[(long)i + (long)j * (long)m] - b[(long)i + (long)j * (long)m]))
-	        maxerr = fabs(a[(long)i + (long)j * (long)m] - b[(long)i + (long)j * (long)m]);
+              if (maxerr < fabs(a[(long)i + (long)j * (long)m] -
+                                b[(long)i + (long)j * (long)m]))
+                maxerr = fabs(a[(long)i + (long)j * (long)m] -
+                              b[(long)i + (long)j * (long)m]);
 #else
-	    if (maxerr < fabs(a[((long)i + (long)j * (long)m) * 2 + 0] - b[((long)i + (long)j * (long)m) * 2 + 0]))
-	        maxerr = fabs(a[((long)i + (long)j * (long)m) * 2 + 0] - b[((long)i + (long)j * (long)m) * 2 + 0]);
-	    if (maxerr < fabs(a[((long)i + (long)j * (long)m) * 2 + 1] - b[((long)i + (long)j * (long)m) * 2 + 1]))
-	        maxerr = fabs(a[((long)i + (long)j * (long)m) * 2 + 1] - b[((long)i + (long)j * (long)m) * 2 + 1]);
+              if (maxerr < fabs(a[((long)i + (long)j * (long)m) * 2 + 0] -
+                                b[((long)i + (long)j * (long)m) * 2 + 0]))
+                maxerr = fabs(a[((long)i + (long)j * (long)m) * 2 + 0] -
+                              b[((long)i + (long)j * (long)m) * 2 + 0]);
+              if (maxerr < fabs(a[((long)i + (long)j * (long)m) * 2 + 1] -
+                                b[((long)i + (long)j * (long)m) * 2 + 1]))
+                maxerr = fabs(a[((long)i + (long)j * (long)m) * 2 + 1] -
+                              b[((long)i + (long)j * (long)m) * 2 + 1]);
 #endif
-	  }
-	}
+            }
+          }
+        }
       }
-
-      fprintf(stderr,
-#ifdef XDOUBLE
-	      "  %Le  %10.3f MFlops %10.6f SEC", maxerr,
-#else
-	      "  %e  %10.3f MFlops %10.6f SEC", maxerr,
-#endif
-	      getmflops(COMPSIZE * COMPSIZE, m, time1), time1);
-
       if (maxerr > 1.e-3) {
-	fprintf(stderr, "Hmm, probably it has bug.\n");
-	exit(1);
+        fprintf(stderr, "Hmm, probably it has bug.\n");
+        exit(1);
       }
-
     }
+    fprintf(stderr,
+#ifdef XDOUBLE
+            "  %Le  %10.3f MFlops %10.6f SEC", maxerr,
+#else
+            "  %e  %10.3f MFlops %10.6f SEC", maxerr,
+#endif
+            getmflops(COMPSIZE * COMPSIZE, m, timeg / loops), timeg);
     fprintf(stderr, "\n");
-
   }
 
   return 0;

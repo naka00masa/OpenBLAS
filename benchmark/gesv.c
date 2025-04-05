@@ -45,53 +45,74 @@ double fabs(double);
 
 #ifndef COMPLEX
 #ifdef XDOUBLE
-#define GESV   BLASFUNC(qgesv)
+#define GESV BLASFUNC(qgesv)
 #elif defined(DOUBLE)
-#define GESV   BLASFUNC(dgesv)
+#define GESV BLASFUNC(dgesv)
 #else
-#define GESV   BLASFUNC(sgesv)
+#define GESV BLASFUNC(sgesv)
 #endif
 #else
 #ifdef XDOUBLE
-#define GESV   BLASFUNC(xgesv)
+#define GESV BLASFUNC(xgesv)
 #elif defined(DOUBLE)
-#define GESV   BLASFUNC(zgesv)
+#define GESV BLASFUNC(zgesv)
 #else
-#define GESV   BLASFUNC(cgesv)
+#define GESV BLASFUNC(cgesv)
 #endif
 #endif
 
-int main(int argc, char *argv[]){
-
+int main(int argc, char *argv[]) {
   FLOAT *a, *b;
   blasint *ipiv;
+  char *p;
+
+  int loops = 1;
+  int l;
+
+  if ((p = getenv("OPENBLAS_LOOPS"))) loops = atoi(p);
 
   blasint m, i, j, info;
 
-  int from =   1;
-  int to   = 200;
-  int step =   1;
+  int from = 1;
+  int to = 200;
+  int step = 1;
 
-  double time1;
+  double timeg;
 
-  argc--;argv++;
+  argc--;
+  argv++;
 
-  if (argc > 0) { from     = atol(*argv);		argc--; argv++;}
-  if (argc > 0) { to       = MAX(atol(*argv), from);	argc--; argv++;}
-  if (argc > 0) { step     = atol(*argv);		argc--; argv++;}
+  if (argc > 0) {
+    from = atol(*argv);
+    argc--;
+    argv++;
+  }
+  if (argc > 0) {
+    to = MAX(atol(*argv), from);
+    argc--;
+    argv++;
+  }
+  if (argc > 0) {
+    step = atol(*argv);
+    argc--;
+    argv++;
+  }
 
   fprintf(stderr, "From : %3d  To : %3d Step = %3d\n", from, to, step);
 
-  if (( a = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((a = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-  if (( b = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((b = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-  if (( ipiv = (blasint *)malloc(sizeof(blasint) * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((ipiv = (blasint *)malloc(sizeof(blasint) * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
 #ifdef __linux
@@ -100,41 +121,44 @@ int main(int argc, char *argv[]){
 
   fprintf(stderr, "   SIZE       Flops              Time\n");
 
-  for(m = from; m <= to; m += step){
-
+  for (m = from; m <= to; m += step) {
+    timeg = 0.0;
     fprintf(stderr, " %dx%d : ", (int)m, (int)m);
 
-    for(j = 0; j < m; j++){
-      for(i = 0; i < m * COMPSIZE; i++){
-	a[(long)i + (long)j * (long)m * COMPSIZE] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
+    for (l = 0; l < loops; l++) {
+      for (j = 0; j < m; j++) {
+        for (i = 0; i < m * COMPSIZE; i++) {
+          a[(long)i + (long)j * (long)m * COMPSIZE] =
+              ((FLOAT)rand() / (FLOAT)RAND_MAX) - 0.5;
+        }
       }
-    }
 
-    for(j = 0; j < m; j++){
-      for(i = 0; i < m * COMPSIZE; i++){
-	b[(long)i + (long)j * (long)m * COMPSIZE] = 0.0;
+      for (j = 0; j < m; j++) {
+        for (i = 0; i < m * COMPSIZE; i++) {
+          b[(long)i + (long)j * (long)m * COMPSIZE] = 0.0;
+        }
       }
-    }
 
-
-    for (j = 0; j < m; ++j) {
-      for (i = 0; i < m * COMPSIZE; ++i) {
-	b[i] += a[(long)i + (long)j * (long)m * COMPSIZE];
+      for (j = 0; j < m; ++j) {
+        for (i = 0; i < m * COMPSIZE; ++i) {
+          b[i] += a[(long)i + (long)j * (long)m * COMPSIZE];
+        }
       }
+
+      begin();
+
+      GESV(&m, &m, a, &m, ipiv, b, &m, &info);
+
+      end();
+
+      timeg += getsec();
     }
-
-    begin();
-
-    GESV (&m, &m, a, &m, ipiv, b, &m,  &info);
-
-    end();
-
-    time1 = getsec();
-
-    fprintf(stderr,
-	    "%10.2f MFlops %10.6f SEC\n",
-	    COMPSIZE * COMPSIZE * (2. / 3. * (double)m * (double)m * (double)m + 2. * (double)m * (double)m * (double)m ) / (time1) * 1.e-6 , time1);
-
+    fprintf(stderr, "%10.2f MFlops %10.6f SEC\n",
+            COMPSIZE * COMPSIZE *
+                (2. / 3. * (double)m * (double)m * (double)m +
+                 2. * (double)m * (double)m * (double)m) *
+                loops / timeg * 1.e-6,
+            timeg);
   }
 
   return 0;

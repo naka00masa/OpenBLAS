@@ -17,89 +17,100 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 ARE DISCLAIMED. IN NO EVENT SHALL THE OPENBLAS PROJECT OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *****************************************************************************/
 
 #include "bench.h"
-
 
 #undef TRSM
 
 #ifndef COMPLEX
 
 #ifdef DOUBLE
-#define TRSM   BLASFUNC(dtrsm)
+#define TRSM BLASFUNC(dtrsm)
 #else
-#define TRSM   BLASFUNC(strsm)
+#define TRSM BLASFUNC(strsm)
 #endif
 
 #else
 
 #ifdef DOUBLE
-#define TRSM   BLASFUNC(ztrsm)
+#define TRSM BLASFUNC(ztrsm)
 #else
-#define TRSM   BLASFUNC(ctrsm)
+#define TRSM BLASFUNC(ctrsm)
 #endif
 
 #endif
 
-int main(int argc, char *argv[]){
-
+int main(int argc, char *argv[]) {
   FLOAT *a, *b;
   FLOAT alpha[] = {1.0, 1.0};
-  FLOAT beta [] = {1.0, 1.0};
+  FLOAT beta[] = {1.0, 1.0};
   char *p;
 
-  char side ='L';
-  char uplo ='U';
-  char trans='N';
-  char diag ='U';
-
+  char side = 'L';
+  char uplo = 'U';
+  char trans = 'N';
+  char diag = 'U';
 
   int l;
   int loops = 1;
   double timeg;
 
-  if ((p = getenv("OPENBLAS_SIDE"))) side=*p; 
-  if ((p = getenv("OPENBLAS_UPLO"))) uplo=*p;
-  if ((p = getenv("OPENBLAS_TRANS"))) trans=*p;
-  if ((p = getenv("OPENBLAS_DIAG"))) diag=*p;
+  if ((p = getenv("OPENBLAS_SIDE"))) side = *p;
+  if ((p = getenv("OPENBLAS_UPLO"))) uplo = *p;
+  if ((p = getenv("OPENBLAS_TRANS"))) trans = *p;
+  if ((p = getenv("OPENBLAS_DIAG"))) diag = *p;
 
   p = getenv("OPENBLAS_LOOPS");
-  if ( p != NULL )
-        loops = atoi(p);
-
+  if (p != NULL) loops = atoi(p);
 
   blasint m, i, j;
 
-  int from =   1;
-  int to   = 200;
-  int step =   1;
+  int from = 1;
+  int to = 200;
+  int step = 1;
 
   double time1;
 
-  argc--;argv++;
+  argc--;
+  argv++;
 
-  if (argc > 0) { from     = atol(*argv);		argc--; argv++;}
-  if (argc > 0) { to       = MAX(atol(*argv), from);	argc--; argv++;}
-  if (argc > 0) { step     = atol(*argv);		argc--; argv++;}
-
-  fprintf(stderr, "From : %3d  To : %3d Step = %3d Side = %c Uplo = %c Trans = %c Diag = %c Loops = %d\n", from, to, step,side,uplo,trans,diag,loops);
-
-  if (( a = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if (argc > 0) {
+    from = atol(*argv);
+    argc--;
+    argv++;
+  }
+  if (argc > 0) {
+    to = MAX(atol(*argv), from);
+    argc--;
+    argv++;
+  }
+  if (argc > 0) {
+    step = atol(*argv);
+    argc--;
+    argv++;
   }
 
-  if (( b = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  fprintf(stderr,
+          "From : %3d  To : %3d Step = %3d Side = %c Uplo = %c Trans = %c Diag "
+          "= %c Loops = %d\n",
+          from, to, step, side, uplo, trans, diag, loops);
+
+  if ((a = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-
+  if ((b = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
+  }
 
 #ifdef __linux
   srandom(getpid());
@@ -107,39 +118,32 @@ int main(int argc, char *argv[]){
 
   fprintf(stderr, "   SIZE       Flops\n");
 
-  for(m = from; m <= to; m += step)
-  {
+  for (m = from; m <= to; m += step) {
+    timeg = 0.0;
 
-	timeg=0.0;
+    fprintf(stderr, " %6d : ", (int)m);
 
-        fprintf(stderr, " %6d : ", (int)m);
+    for (j = 0; j < m; j++) {
+      for (i = 0; i < m * COMPSIZE; i++) {
+        a[(long)i + (long)j * (long)m * COMPSIZE] =
+            ((FLOAT)rand() / (FLOAT)RAND_MAX) - 0.5;
+        b[(long)i + (long)j * (long)m * COMPSIZE] =
+            ((FLOAT)rand() / (FLOAT)RAND_MAX) - 0.5;
+      }
+    }
 
-	for (l=0; l<loops; l++)
-    	{
+    begin();
+    for (l = 0; l < loops; l++) {
+      TRSM(&side, &uplo, &trans, &diag, &m, &m, alpha, a, &m, b, &m);
+    }
+    end();
+    timeg = getsec();
+    time1 = timeg / loops;
 
-
-   		 for(j = 0; j < m; j++){
-      			for(i = 0; i < m * COMPSIZE; i++){
-				a[(long)i + (long)j * (long)m * COMPSIZE] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-				b[(long)i + (long)j * (long)m * COMPSIZE] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-      		 	}
-    		 }
-
-    		begin();
-
-    		TRSM (&side, &uplo, &trans, &diag, &m, &m, alpha, a, &m, b, &m);
-
-    		end();
-
-    		time1 = getsec();
-
-		timeg += time1;
-        }
-
-	time1 = timeg/loops;
-
-        fprintf(stderr, " %10.2f MFlops %10.6f SEC\n", COMPSIZE * COMPSIZE * 1. * (double)m * (double)m * (double)m / time1 * 1.e-6, time1);
-
+    fprintf(stderr, " %10.2f MFlops %10.6f SEC\n",
+            COMPSIZE * COMPSIZE * 1. * (double)m * (double)m * (double)m /
+                time1 * 1.e-6,
+            timeg);
   }
 
   return 0;

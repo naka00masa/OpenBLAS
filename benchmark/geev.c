@@ -42,105 +42,128 @@
 
 #ifndef COMPLEX
 #ifdef XDOUBLE
-#define GEEV   BLASFUNC(qgeev)
+#define GEEV BLASFUNC(qgeev)
 #elif defined(DOUBLE)
-#define GEEV   BLASFUNC(dgeev)
+#define GEEV BLASFUNC(dgeev)
 #else
-#define GEEV   BLASFUNC(sgeev)
+#define GEEV BLASFUNC(sgeev)
 #endif
 #else
 #ifdef XDOUBLE
-#define GEEV   BLASFUNC(xgeev)
+#define GEEV BLASFUNC(xgeev)
 #elif defined(DOUBLE)
-#define GEEV   BLASFUNC(zgeev)
+#define GEEV BLASFUNC(zgeev)
 #else
-#define GEEV   BLASFUNC(cgeev)
+#define GEEV BLASFUNC(cgeev)
 #endif
 #endif
 
 #ifndef COMPLEX
-extern void GEEV( char* jobvl, char* jobvr, blasint* n, FLOAT* a,
-                blasint* lda, FLOAT* wr, FLOAT* wi, FLOAT* vl, blasint* ldvl,
-                FLOAT* vr, blasint* ldvr, FLOAT* work, blasint* lwork, blasint* info );
+extern void GEEV(char* jobvl, char* jobvr, blasint* n, FLOAT* a, blasint* lda,
+                 FLOAT* wr, FLOAT* wi, FLOAT* vl, blasint* ldvl, FLOAT* vr,
+                 blasint* ldvr, FLOAT* work, blasint* lwork, blasint* info);
 #else
-extern void GEEV( char* jobvl, char* jobvr, blasint* n, FLOAT* a,
-                blasint* lda, FLOAT* wr, FLOAT* vl, blasint* ldvl,
-                FLOAT* vr, blasint* ldvr, FLOAT* work, blasint* lwork, FLOAT *rwork, blasint* info );
+extern void GEEV(char* jobvl, char* jobvr, blasint* n, FLOAT* a, blasint* lda,
+                 FLOAT* wr, FLOAT* vl, blasint* ldvl, FLOAT* vr, blasint* ldvr,
+                 FLOAT* work, blasint* lwork, FLOAT* rwork, blasint* info);
 #endif
 
-int main(int argc, char *argv[]){
-
-  FLOAT *a,*vl,*vr,*wi,*wr,*work,*rwork;
+int main(int argc, char* argv[]) {
+  FLOAT *a, *vl, *vr, *wi, *wr, *work, *rwork;
   FLOAT wkopt[4];
-  char job='V';
-  char jobr='N';
-  char *p;
+  char job = 'V';
+  char jobr = 'N';
+  char* p;
 
-  blasint m, i, j, info,lwork;
+  blasint m, i, j, info, lwork;
   double factor = 26.33;
 
-  int from =   1;
-  int to   = 200;
-  int step =   1;
+  int from = 1;
+  int to = 200;
+  int step = 1;
 
-  double time1;
+  int loops = 1;
+  int l;
 
-  argc--;argv++;
+  double timeg;
 
-  if (argc > 0) { from     = atol(*argv);		argc--; argv++;}
-  if (argc > 0) { to       = MAX(atol(*argv), from);	argc--; argv++;}
-  if (argc > 0) { step     = atol(*argv);		argc--; argv++;}
+  argc--;
+  argv++;
 
-  if ((p = getenv("OPENBLAS_JOB")))  job=*p;
-
-  if ( job == 'N' ) factor = 10.0;
-
-  fprintf(stderr, "From : %3d  To : %3d Step = %3d Job=%c\n", from, to, step,job);
-
-  if (( a = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if (argc > 0) {
+    from = atol(*argv);
+    argc--;
+    argv++;
+  }
+  if (argc > 0) {
+    to = MAX(atol(*argv), from);
+    argc--;
+    argv++;
+  }
+  if (argc > 0) {
+    step = atol(*argv);
+    argc--;
+    argv++;
   }
 
-  if (( vl = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((p = getenv("OPENBLAS_JOB"))) job = *p;
+  if ((p = getenv("OPENBLAS_LOOPS"))) loops = atoi(p);
+
+  if (job == 'N') factor = 10.0;
+
+  fprintf(stderr, "From : %3d  To : %3d Step = %3d Job=%c\n", from, to, step,
+          job);
+
+  if ((a = (FLOAT*)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-  if (( vr = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((vl = (FLOAT*)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-  if (( wr = (FLOAT *)malloc(sizeof(FLOAT) * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((vr = (FLOAT*)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-  if (( wi = (FLOAT *)malloc(sizeof(FLOAT) * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((wr = (FLOAT*)malloc(sizeof(FLOAT) * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-  if (( rwork = (FLOAT *)malloc(sizeof(FLOAT) * to * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((wi = (FLOAT*)malloc(sizeof(FLOAT) * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
 
-    for(j = 0; j < to; j++){
-      for(i = 0; i < to * COMPSIZE; i++){
-	a[(long)i + (long)j * (long)to * COMPSIZE] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-      }
+  if ((rwork = (FLOAT*)malloc(sizeof(FLOAT) * to * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
+  }
+
+  for (j = 0; j < to; j++) {
+    for (i = 0; i < to * COMPSIZE; i++) {
+      a[(long)i + (long)j * (long)to * COMPSIZE] =
+          ((FLOAT)rand() / (FLOAT)RAND_MAX) - 0.5;
     }
+  }
 
-
-    lwork = -1;
-    m=to;
+  lwork = -1;
+  m = to;
 #ifndef COMPLEX
-    GEEV (&job, &jobr, &m, a, &m, wr, wi, vl, &m, vr, &m, wkopt, &lwork, &info);
+  GEEV(&job, &jobr, &m, a, &m, wr, wi, vl, &m, vr, &m, wkopt, &lwork, &info);
 #else
-    GEEV (&job, &jobr, &m, a, &m, wr, vl, &m, vr, &m, wkopt, &lwork,rwork, &info);
+  GEEV(&job, &jobr, &m, a, &m, wr, vl, &m, vr, &m, wkopt, &lwork, rwork, &info);
 #endif
 
   lwork = (blasint)wkopt[0];
-  if (( work = (FLOAT *)malloc(sizeof(FLOAT) * lwork * COMPSIZE)) == NULL){
-    fprintf(stderr,"Out of Memory!!\n");exit(1);
+  if ((work = (FLOAT*)malloc(sizeof(FLOAT) * lwork * COMPSIZE)) == NULL) {
+    fprintf(stderr, "Out of Memory!!\n");
+    exit(1);
   }
-
 
 #ifdef __linux
   srandom(getpid());
@@ -148,39 +171,43 @@ int main(int argc, char *argv[]){
 
   fprintf(stderr, "   SIZE           FLops           Time          Lwork\n");
 
-  for(m = from; m <= to; m += step){
-
+  for (m = from; m <= to; m += step) {
+    timeg = 0.0;
     fprintf(stderr, " %6d : ", (int)m);
-    begin();
 
-    lwork = -1;
+    for (l = 0; l < loops; l++) {
+      begin();
+
+      lwork = -1;
 #ifndef COMPLEX
-    GEEV (&job, &jobr, &m, a, &m, wr, wi, vl, &m, vr, &m, wkopt, &lwork, &info);
+      GEEV(&job, &jobr, &m, a, &m, wr, wi, vl, &m, vr, &m, wkopt, &lwork,
+           &info);
 #else
-    GEEV (&job, &jobr, &m, a, &m, wr, vl, &m, vr, &m, wkopt, &lwork,rwork, &info);
+      GEEV(&job, &jobr, &m, a, &m, wr, vl, &m, vr, &m, wkopt, &lwork, rwork,
+           &info);
 #endif
 
-    lwork = (blasint)wkopt[0];
+      lwork = (blasint)wkopt[0];
 #ifndef COMPLEX
-    GEEV (&job, &jobr, &m, a, &m, wr, wi, vl, &m, vr, &m, work, &lwork, &info);
+      GEEV(&job, &jobr, &m, a, &m, wr, wi, vl, &m, vr, &m, work, &lwork, &info);
 #else
-    GEEV (&job, &jobr, &m, a, &m, wr, vl, &m, vr, &m, work, &lwork,rwork, &info);
+      GEEV(&job, &jobr, &m, a, &m, wr, vl, &m, vr, &m, work, &lwork, rwork,
+           &info);
 #endif
 
-    end();
+      end();
 
-    if (info) {
-      fprintf(stderr, "failed to compute eigenvalues .. %d\n", info);
-      exit(1);
+      if (info) {
+        fprintf(stderr, "failed to compute eigenvalues .. %d\n", info);
+        exit(1);
+      }
+
+      timeg += getsec();
     }
-
-    time1 = getsec();
-
-    fprintf(stderr,
-	    " %10.2f MFlops %10.6f SEC : %d\n",
-	    COMPSIZE * COMPSIZE * factor * (double)m * (double)m * (double)m / time1 * 1.e-6,time1,lwork);
-
-
+    fprintf(stderr, " %10.2f MFlops %10.6f SEC : %d\n",
+            COMPSIZE * COMPSIZE * factor * (double)m * (double)m * (double)m *
+                loops / timeg * 1.e-6,
+            timeg, lwork);
   }
 
   return 0;
