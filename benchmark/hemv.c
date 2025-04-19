@@ -101,13 +101,9 @@ int main(int argc, char *argv[]){
     for (l=0; l<loops; l++)
     {
 
-   	for(i = 0; i < m * COMPSIZE * abs(inc_x); i++){
-			x[i] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-   	}
+      memset(x, 0, sizeof(FLOAT) * m * COMPSIZE * abs(inc_x));
 
-   	for(i = 0; i < m * COMPSIZE * abs(inc_y); i++){
-			y[i] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-   	}
+      memset(y, 0, sizeof(FLOAT) * m * COMPSIZE * abs(inc_y));
     	begin();
 
     	HEMV (&uplo, &m, alpha, a, &m, x, &inc_x, beta, y, &inc_y );
@@ -120,12 +116,11 @@ int main(int argc, char *argv[]){
 
     }
 
-    time1 = timeg;
-    timeg /= loops;
+    time1 = timeg / loops;
 
     fprintf(stderr,
 	    " %10.2f MFlops %10.6f SEC\n",
-	    COMPSIZE * COMPSIZE * 2. * (double)m * (double)m / timeg * 1.e-6, time1);
+	    COMPSIZE * COMPSIZE * 2. * (double)m * (double)m / time1 * 1.e-6, timeg);
 
   }
 

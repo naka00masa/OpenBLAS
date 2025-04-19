@@ -110,23 +110,19 @@ int main(int argc, char *argv[])
     for (l = 0; l < loops; l++)
     {
 
-      for (i = 0; i < m * COMPSIZE * abs(inc_x); i++)
-      {
-        x[i] = ((FLOAT)rand() / (FLOAT)RAND_MAX) - 0.5;
-      }
+      memset(x, 0, sizeof(FLOAT) * m * COMPSIZE * abs(inc_x));
       begin();
       result = ASUM(&m, x, &inc_x);
       end();
       timeg += getsec();
     }
     if (loops > 1)
-      time1 = timeg;
-      timeg /= loops;
+      time1 = timeg / loops;
 
 #ifdef COMPLEX
-    fprintf(stderr, " %10.2f MFlops %10.6f SEC\n", 4. * (double)m / timeg * 1.e-6, time1);
+    fprintf(stderr, " %10.2f MFlops %10.6f SEC\n", 4. * (double)m / time1 * 1.e-6, timeg);
 #else
-    fprintf(stderr, " %10.2f MFlops %10.6f SEC\n", 2. * (double)m / timeg * 1.e-6, time1);
+    fprintf(stderr, " %10.2f MFlops %10.6f SEC\n", 2. * (double)m / time1 * 1.e-6, timeg);
 #endif
   }
 

@@ -108,9 +108,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        for (i = 0; i < n * COMPSIZE * abs(inc_x); i++) {
-            x[i] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-        }
+        memset(x, 0, sizeof(FLOAT) * n * COMPSIZE * abs(inc_x));
 
         for (l = 0; l < loops; l++) {
             begin();
@@ -121,10 +119,9 @@ int main(int argc, char *argv[])
             timeg += time1;
         }
 
-        time1 = timeg;
-        timeg /= loops;
+        time1 = timeg / loops;
         fprintf(stderr, " %10.2f MFlops %12.6f SEC\n",
-                COMPSIZE * COMPSIZE * 1. * (double)n * (double)n / timeg / 1.e6, time1);
+                COMPSIZE * COMPSIZE * 1. * (double)n * (double)n / time1 / 1.e6, timeg);
     }
 
     return 0;

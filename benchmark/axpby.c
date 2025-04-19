@@ -110,12 +110,11 @@ int main(int argc, char *argv[]){
         timeg += getsec();
     }
 
-    time1 = timeg;
-    timeg /= loops;
+    time1 = timeg / loops;
 
     fprintf(stderr,
         " %10.2f MFlops %10.6f SEC\n",
-        (COMPSIZE * COMPSIZE * 4. - COMPSIZE) * (double)m / timeg * 1.e-6, time1);
+        (COMPSIZE * COMPSIZE * 4. - COMPSIZE) * (double)m / time1 * 1.e-6, time1);
 
   }
 

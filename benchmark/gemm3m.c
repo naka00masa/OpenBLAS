@@ -107,13 +107,9 @@ int main(int argc, char *argv[]){
     for (l=0; l<loops; l++)
     {
   
-    	for(j = 0; j < m; j++){
-      		for(i = 0; i < m * COMPSIZE; i++){
-			a[(long)i + (long)j * (long)m * COMPSIZE] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-			b[(long)i + (long)j * (long)m * COMPSIZE] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-			c[(long)i + (long)j * (long)m * COMPSIZE] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-      		}
-    	}
+      memset(a, 0, sizeof(FLOAT) * m * m * COMPSIZE);
+      memset(b, 0, sizeof(FLOAT) * m * m * COMPSIZE);
+      memset(c, 0, sizeof(FLOAT) * m * m * COMPSIZE);
 
     	begin();
 
@@ -123,11 +119,10 @@ int main(int argc, char *argv[]){
 	    timeg += getsec();
     }
 
-    time1 = timeg;
-    timeg /= loops;
+    time1 = timeg / loops;
     fprintf(stderr,
 	    " %10.2f MFlops %10.6f SEC\n",
-	    COMPSIZE * COMPSIZE * 2. * (double)m * (double)m * (double)m / timeg * 1.e-6, time1);
+	    COMPSIZE * COMPSIZE * 2. * (double)m * (double)m * (double)m / time1 * 1.e-6, timeg);
 
   }
 

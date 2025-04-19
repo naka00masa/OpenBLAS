@@ -104,15 +104,9 @@ int main(int argc, char *argv[]){
           fprintf(stderr,"Out of Memory!!\n");exit(1);
       }
 
-      for(j = 0; j < n; j++){
-          for(i = 0; i < n * COMPSIZE; i++){
-              a[i + j * n * COMPSIZE] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-          }
-      }
+      memset(a, 0, sizeof(FLOAT) * n * n * COMPSIZE);
 
-      for(i = 0; i < n * COMPSIZE * abs(inc_x); i++){
-          x[i] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
-      }
+      memset(x, 0, sizeof(FLOAT) * n * COMPSIZE * abs(inc_x));
 
       for(l =0;l< loops;l++){
 
@@ -123,12 +117,11 @@ int main(int argc, char *argv[]){
           timeg += time1;
       }
 
-      time1 = timeg;
-      timeg /= loops;
+      time1 = timeg / loops;
       long long muls = n*(n+1)/2.0;
       long long adds = (n - 1.0)*n/2.0;
 
-      fprintf(stderr, "%10d :   %10.2f MFlops %10.6f SEC\n", n,(muls+adds) / timeg * 1.e-6, time1);
+      fprintf(stderr, "%10d :   %10.2f MFlops %10.6f SEC\n", n,(muls+adds) / time1 * 1.e-6, timeg);
       if(a != NULL){
         free(a);
       }

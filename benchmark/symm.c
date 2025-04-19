@@ -32,81 +32,66 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef COMPLEX
 
 #ifdef DOUBLE
-#define SYMM BLASFUNC(dsymm)
+#define SYMM   BLASFUNC(dsymm)
 #else
-#define SYMM BLASFUNC(ssymm)
+#define SYMM   BLASFUNC(ssymm)
 #endif
 
 #else
 
 #ifdef DOUBLE
-#define SYMM BLASFUNC(zsymm)
+#define SYMM   BLASFUNC(zsymm)
 #else
-#define SYMM BLASFUNC(csymm)
+#define SYMM   BLASFUNC(csymm)
 #endif
 
 #endif
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]){
+
   FLOAT *a, *b, *c;
   FLOAT alpha[] = {1.0, 1.0};
-  FLOAT beta[] = {1.0, 1.0};
+  FLOAT beta [] = {1.0, 1.0};
   char *p;
 
-  char side = 'L';
-  char uplo = 'U';
-
-  int loops = 1;
+  char side='L';
+  char uplo='U';
+  int loops=1;
   int l;
 
-  if ((p = getenv("OPENBLAS_SIDE"))) side = *p;
-  if ((p = getenv("OPENBLAS_UPLO"))) uplo = *p;
+  if ((p = getenv("OPENBLAS_SIDE"))) side=*p; 
+  if ((p = getenv("OPENBLAS_UPLO"))) uplo=*p;
   if ((p = getenv("OPENBLAS_LOOPS"))) loops = atoi(p);
 
   blasint m, i, j;
 
-  int from = 1;
-  int to = 200;
-  int step = 1;
+  int from =   1;
+  int to   = 200;
+  int step =   1;
 
   double timeg;
 
-  argc--;
-  argv++;
+  argc--;argv++;
 
-  if (argc > 0) {
-    from = atol(*argv);
-    argc--;
-    argv++;
-  }
-  if (argc > 0) {
-    to = MAX(atol(*argv), from);
-    argc--;
-    argv++;
-  }
-  if (argc > 0) {
-    step = atol(*argv);
-    argc--;
-    argv++;
+  if (argc > 0) { from     = atol(*argv);		argc--; argv++;}
+  if (argc > 0) { to       = MAX(atol(*argv), from);	argc--; argv++;}
+  if (argc > 0) { step     = atol(*argv);		argc--; argv++;}
+
+  fprintf(stderr, "From : %3d  To : %3d Step = %3d Side = %c Uplo = %c\n", from, to, step,side,uplo);
+
+  if (( a = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
+    fprintf(stderr,"Out of Memory!!\n");exit(1);
   }
 
-  fprintf(stderr, "From : %3d  To : %3d Step = %3d Side = %c Uplo = %c\n", from,
-          to, step, side, uplo);
-
-  if ((a = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
-    fprintf(stderr, "Out of Memory!!\n");
-    exit(1);
+  if (( b = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
+    fprintf(stderr,"Out of Memory!!\n");exit(1);
   }
 
-  if ((b = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
-    fprintf(stderr, "Out of Memory!!\n");
-    exit(1);
+  if (( c = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL){
+    fprintf(stderr,"Out of Memory!!\n");exit(1);
   }
 
-  if ((c = (FLOAT *)malloc(sizeof(FLOAT) * to * to * COMPSIZE)) == NULL) {
-    fprintf(stderr, "Out of Memory!!\n");
-    exit(1);
-  }
+
 
 #ifdef __linux
   srandom(getpid());
@@ -114,32 +99,31 @@ int main(int argc, char *argv[]) {
 
   fprintf(stderr, "   SIZE       Flops\n");
 
-  for (m = from; m <= to; m += step) {
+  for(m = from; m <= to; m += step)
+  {
     timeg = 0.0;
     fprintf(stderr, " %6d : ", (int)m);
 
-    for (j = 0; j < m; j++) {
-      for (i = 0; i < m * COMPSIZE; i++) {
-        a[(long)i + (long)j * (long)m * COMPSIZE] =
-            ((FLOAT)rand() / (FLOAT)RAND_MAX) - 0.5;
-        b[(long)i + (long)j * (long)m * COMPSIZE] =
-            ((FLOAT)rand() / (FLOAT)RAND_MAX) - 0.5;
-        c[(long)i + (long)j * (long)m * COMPSIZE] =
-            ((FLOAT)rand() / (FLOAT)RAND_MAX) - 0.5;
+    for(j = 0; j < m; j++){
+      for(i = 0; i < m * COMPSIZE; i++){
+	a[(long)i + (long)j * (long)m * COMPSIZE] = 0.;
+	b[(long)i + (long)j * (long)m * COMPSIZE] = 0.;
+	c[(long)i + (long)j * (long)m * COMPSIZE] = 0.;
       }
     }
 
     begin();
     for (l = 0; l < loops; l++) {
-      SYMM(&side, &uplo, &m, &m, alpha, a, &m, b, &m, beta, c, &m);
+    SYMM (&side, &uplo, &m, &m, alpha, a, &m, b, &m, beta, c, &m );
     }
     end();
+
     timeg += getsec();
 
-    fprintf(stderr, " %10.2f MFlops %10.6f SEC\n",
-            COMPSIZE * COMPSIZE * 2. * (double)m * (double)m * (double)m *
-                loops / timeg * 1.e-6,
-            timeg);
+    fprintf(stderr,
+      " %10.2f MFlops %10.6f SEC\n",
+      COMPSIZE * COMPSIZE * 2. * (double)m * (double)m * (double)m * loops / timeg * 1.e-6, timeg);
+
   }
 
   return 0;
