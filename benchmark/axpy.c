@@ -92,15 +92,16 @@ int main(int argc, char *argv[]){
    fprintf(stderr, " %6d : ", (int)m);
 
 
+   memset(x, 0, sizeof(FLOAT) * m * COMPSIZE * abs(inc_x));
+
+   memset(y, 0, sizeof(FLOAT) * m * COMPSIZE * abs(inc_y));
+   begin();
    for (l=0; l<loops; l++)
    {
 
-    memset(x, 0, sizeof(FLOAT) * m * COMPSIZE * abs(inc_x));
-
-     memset(y, 0, sizeof(FLOAT) * m * COMPSIZE * abs(inc_y));
-    	begin();
 
     	AXPY (&m, alpha, x, &inc_x, y, &inc_y );
+    }
 
     	end();
 
@@ -108,7 +109,6 @@ int main(int argc, char *argv[]){
 
 	timeg += time1;
 
-    }
 
     time1 = timeg / loops;
 

@@ -140,13 +140,13 @@ int main(int argc, char *argv[]){
       if (uplos & 1) {
 	for (j = 0; j < m; j++) {
 	  for(i = 0; i < j; i++)     a[(long)i + (long)j * (long)m] = 0.;
-	                             a[(long)j + (long)j * (long)m] = 0.;
-	  for(i = j + 1; i < m; i++) a[(long)i + (long)j * (long)m] = 0.;
+	                             a[(long)j + (long)j * (long)m] = 8.;
+	  for(i = j + 1; i < m; i++) a[(long)i + (long)j * (long)m] = -0.5;
 	}
       } else {
 	for (j = 0; j < m; j++) {
-	  for(i = 0; i < j; i++)     a[(long)i + (long)j * (long)m] = 0.;
-	                             a[(long)j + (long)j * (long)m] = 0.;
+	  for(i = 0; i < j; i++)     a[(long)i + (long)j * (long)m] = -0.5;
+	                             a[(long)j + (long)j * (long)m] = 8.;
 	  for(i = j + 1; i < m; i++) a[(long)i + (long)j * (long)m] = 0.;
 	}
       }
@@ -158,22 +158,22 @@ int main(int argc, char *argv[]){
 	    a[((long)i + (long)j * (long)m) * 2 + 1] = 0.;
 	  }
 
-	  a[((long)j + (long)j * (long)m) * 2 + 0] = 0.;
+	  a[((long)j + (long)j * (long)m) * 2 + 0] = 8.;
 	  a[((long)j + (long)j * (long)m) * 2 + 1] = 0.;
 
 	  for(i = j + 1; i < m; i++) {
-	    a[((long)i + (long)j * (long)m) * 2 + 0] = 0.;
-	    a[((long)i + (long)j * (long)m) * 2 + 1] = 0.;
+	    a[((long)i + (long)j * (long)m) * 2 + 0] = -0.5;
+	    a[((long)i + (long)j * (long)m) * 2 + 1] = -0.5;
 	  }
 	}
       } else {
 	for (j = 0; j < m; j++) {
 	  for(i = 0; i < j; i++) {
-	    a[((long)i + (long)j * (long)m) * 2 + 0] = 0.;
-	    a[((long)i + (long)j * (long)m) * 2 + 1] = 0.;
+	    a[((long)i + (long)j * (long)m) * 2 + 0] = -0.5;
+	    a[((long)i + (long)j * (long)m) * 2 + 1] = -0.5;
 	  }
 
-	  a[((long)j + (long)j * (long)m) * 2 + 0] = 0.;
+	  a[((long)j + (long)j * (long)m) * 2 + 0] = 8.;
 	  a[((long)j + (long)j * (long)m) * 2 + 1] = 0.;
 
 	  for(i = j + 1; i < m; i++) {
@@ -229,7 +229,8 @@ int main(int argc, char *argv[]){
 	  }
 	}
       }
-
+    }
+  }
       fprintf(stderr,
 #ifdef XDOUBLE
 	      "  %Le  %10.3f MFlops %10.6f SEC", maxerr,
@@ -243,7 +244,6 @@ int main(int argc, char *argv[]){
 	exit(1);
       }
 
-    }
     fprintf(stderr, "\n");
 
   }

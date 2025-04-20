@@ -117,10 +117,19 @@ int main(int argc, char *argv[]){
     timeg1 = timeg2 = 0.;
     fprintf(stderr, " %6d : ", (int)m);
     for (l = 0; l < loops; l++) {
-    memset(a, 0, sizeof(FLOAT) * m * m * COMPSIZE);
+    for(j = 0; j < m; j++){
+      for(i = 0; i < m * COMPSIZE; i++){
+	a[(long)i + (long)j * (long)m * COMPSIZE] = ((FLOAT) rand() / (FLOAT) RAND_MAX) - 0.5;
+      }
+    }
 
-    memset(b, 0, sizeof(FLOAT) * m * COMPSIZE);
+    for (i = 0; i < m * COMPSIZE; ++i) b[i] = 0.;
 
+    for (j = 0; j < m; ++j) {
+      for (i = 0; i < m * COMPSIZE; ++i) {
+	b[i] += a[(long)i + (long)j * (long)m * COMPSIZE];
+      }
+    }
 
     begin();
 
